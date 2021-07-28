@@ -1,0 +1,5 @@
+sample  group   treatment   index   index sequence
+1   A   n/a A1  ATCG
+2   B   n/a B2  CGAT
+3   C   n/a C3  TACG
+4   D   n/a D4  GAAC

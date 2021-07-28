@@ -1,0 +1,77 @@
+Demultiplex - Assignment the First
+
+------------
+27 July 2021
+------------
+
+manually looked at length of reads in r1 and checked to see if the first 10 look the same (they do).
+Read length for r1 = 101 (need to check with someone if it's ok to assume they're all the same. or maybe come up with my own check)
+
+#check number of records in one of the files (they should all have the same number of records, confirmed this with Jason)
+srun --account=bgmp --partition=bgmp --time=1:00:00 --cpus-per-task=8 --pty bash
+srun: job 15561002 queued and waiting for resources
+srun: job 15561002 has been allocated resources
+# Storage usage in GB as of Tue Jul 27 11:01:04 2021
+Fileset          User             UsedByUser  UsedByAll      Quota  Use%
+home             sgrindst                  1          -         20     4
+bgmp             sgrindst                 32      16882      61440    27
+(base) [sgrindst@n225 2017_sequencing]$ zcat 1294_S1_L008_R1_001.fastq.gz | wc -l
+
+It's taking a super long time to give me the line count, I wonder if there's a better way...
+
+I just realized I should probably do this on an index file instead because there's slightly less data. Killed first job, trying again with R2 (index 1)
+
+srun --account=bgmp --partition=bgmp --time=1:00:00 --cpus-per-task=8 --pty bash
+srun: job 15561119 queued and waiting for resources
+srun: job 15561119 has been allocated resources
+# Storage usage in GB as of Tue Jul 27 11:01:04 2021
+Fileset          User             UsedByUser  UsedByAll      Quota  Use%
+home             sgrindst                  1          -         20     4
+bgmp             sgrindst                 32      16882      61440    27
+(base) [sgrindst@n225 2017_sequencing]$ zcat 1294_S1_L008_R2_001.fastq.gz | wc -l
+
+output: 1452986940
+number of records = 1452986940/4 =363246735  records
+
+#install numpy in conda env bgmp_py39
+conda activate bgmp_py39
+conda install numpy
+(version 1.21.1)
+
+note: must activate conda env in slurm script
+
+------------
+28 July 2021
+------------
+
+sbatch qual_scores_run.sh 
+Submitted batch job 15563630
+
+Exit status 1. I forgot to do with gzip.open! Fixed that and trying again.
+
+sbatch qual_scores_run.sh 
+Submitted batch job 15563634
+
+Still exited with exit code 1. Christina told me that gzip.open defaults to 'rb' (binary reading) if you just say 'r', so you have to specify 'rt' to open in text mode
+
+sbatch qual_scores_run.sh
+Submitted batch job 15563640
+
+Assignment the first, part 1, question 3:
+cd /projects/bgmp/shared/2017_sequencing
+(base) [sgrindst@n226 2017_sequencing]$ zcat 1294_S1_L008_R2_001.fastq.gz | sed -n '2~4p' | grep 'N' | wc -l
+
+That was taking a really long time (over 20 minutes) so I submitted a batch script:
+
+sbatch N_indexes_count.sh
+Submitted batch job 15563652
+
+3976613 (R2) + 3328051 (R3)= 7,304,664 total indexes with Ns
+
+notes about choosing a cutoff score
+- we will be aligning reads to a reference, so they don't need to be super super accurate
+- but we do need to be super confident about every single base of the indexes
+    - use an individual qscore cutoff rather than an average cutoff
+    - base cutoff off of hamming distance between barcodes (stricter cutoff if smaller hamming index)
+        - nevermind
+    - probability of single base error for Illumina is 0.1% , -log(0.001) = 30 so Q30 is our cutoff for any individual base in index quality score string
