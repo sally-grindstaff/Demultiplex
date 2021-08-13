@@ -1,0 +1,3 @@
+Number (and percentage) of read pairs with unknown or low-quality indexes: 136200158 (37.49521878014953%)
+Number (and percentage) of read pairs with index-swapping: 330975 (0.09111575359376596%)
+Number (and percentage) of read pairs with correctly-matched indexes: 226715602 (62.4136654662567%)
